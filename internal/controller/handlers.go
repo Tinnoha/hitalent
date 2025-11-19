@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"testovoe/internal/entity"
+	"testovoe/internal/pkg"
 	"testovoe/internal/usecase"
 	"time"
 )
@@ -14,10 +15,19 @@ import (
 type HTTPHandler struct {
 	answer   *usecase.AnswerUseCase
 	question *usecase.QuestionUseCase
+	logger   pkg.Logger
+}
+
+func NewHTTPHandler(answerUC *usecase.AnswerUseCase, questionUC *usecase.QuestionUseCase, logger pkg.Logger) *HTTPHandler {
+	return &HTTPHandler{
+		answer:   answerUC,
+		question: questionUC,
+		logger:   logger.WithFields(map[string]interface{}{"layer": "http"}),
+	}
 }
 
 type ErrorDTO struct {
-	Message error     `json:"message"`
+	Message string    `json:"message"`
 	Time    time.Time `json:"time"`
 }
 
@@ -33,7 +43,7 @@ func (er *ErrorDTO) ToString() string {
 
 func httpError(w http.ResponseWriter, err error, status int) {
 	errDTO := ErrorDTO{
-		Message: err,
+		Message: err.Error(),
 		Time:    time.Now(),
 	}
 
@@ -46,6 +56,13 @@ func httpError(w http.ResponseWriter, err error, status int) {
 
 // GET All questions input - nothing                  output - json all question
 func (h *HTTPHandler) QuestionGetAll(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent())
+
+	start := time.Now()
+
 	questions, err := h.question.GetAll()
 
 	if err != nil {
@@ -60,6 +77,10 @@ func (h *HTTPHandler) QuestionGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Info("questions getet via HTTP",
+		"duration", time.Since(start),
+	)
+
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("Error to write answer")
@@ -68,6 +89,14 @@ func (h *HTTPHandler) QuestionGetAll(w http.ResponseWriter, r *http.Request) {
 
 // GET 1 question    input - query id                 output - json one question
 func (h *HTTPHandler) QuestionGetById(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+
+	start := time.Now()
+
 	StringID := r.PathValue("id")
 	if StringID == "" {
 		httpError(w, errors.New("This id is empty"), http.StatusBadRequest)
@@ -95,6 +124,10 @@ func (h *HTTPHandler) QuestionGetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Info("question geted via HTTP",
+		"duration", time.Since(start),
+	)
+
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("Error to write answer")
@@ -103,6 +136,13 @@ func (h *HTTPHandler) QuestionGetById(w http.ResponseWriter, r *http.Request) {
 
 // POST question     input - json with data question  output - json created question
 func (h *HTTPHandler) QuestionCreate(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+	start := time.Now()
+
 	questionDTO := entity.QuestionDto{}
 
 	err := json.NewDecoder(r.Body).Decode(&questionDTO)
@@ -126,6 +166,8 @@ func (h *HTTPHandler) QuestionCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Info("question created via HTTP", "duration", time.Since(start))
+
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("Error to write answer")
@@ -134,6 +176,13 @@ func (h *HTTPHandler) QuestionCreate(w http.ResponseWriter, r *http.Request) {
 
 // DELETE question   input - query id                 output - nothing
 func (h *HTTPHandler) QuestionDelete(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+	start := time.Now()
+
 	StringID := r.PathValue("id")
 	if StringID != "" {
 		id, err := strconv.Atoi(StringID)
@@ -144,6 +193,8 @@ func (h *HTTPHandler) QuestionDelete(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = h.question.Delete(id)
+
+		h.logger.Info("question deleted via HTTP", "duration", time.Since(start))
 
 		if err != nil {
 			httpError(w, err, http.StatusBadRequest)
@@ -156,6 +207,13 @@ func (h *HTTPHandler) QuestionDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) AnswerGetById(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+	start := time.Now()
+
 	StringID := r.PathValue("id")
 	if StringID == "" {
 		httpError(w, errors.New("This id is empty"), http.StatusBadRequest)
@@ -183,6 +241,8 @@ func (h *HTTPHandler) AnswerGetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Info("answer geted via HTTP", "duration", time.Since(start))
+
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("Error to write answer")
@@ -190,6 +250,13 @@ func (h *HTTPHandler) AnswerGetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) AnswerCreate(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+	start := time.Now()
+
 	StringID := r.PathValue("id")
 	if StringID == "" {
 		httpError(w, errors.New("This id is empty"), http.StatusBadRequest)
@@ -225,6 +292,8 @@ func (h *HTTPHandler) AnswerCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Info("answer created via HTTP", "duration", time.Since(start))
+
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("Error to write answer")
@@ -232,6 +301,13 @@ func (h *HTTPHandler) AnswerCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) AnswerDelete(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("HTTP request received",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"user_agent", r.UserAgent(),
+	)
+	start := time.Now()
+
 	StringID := r.PathValue("id")
 	if StringID != "" {
 		id, err := strconv.Atoi(StringID)
@@ -243,11 +319,14 @@ func (h *HTTPHandler) AnswerDelete(w http.ResponseWriter, r *http.Request) {
 
 		err = h.answer.Delete(id)
 
+		h.logger.Info("answer deleted via HTTP", "duration", time.Since(start))
+
 		if err != nil {
 			httpError(w, err, http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+
 	} else {
 		httpError(w, errors.New("This id is empty"), http.StatusBadRequest)
 	}
