@@ -15,7 +15,6 @@ type Answer struct {
 }
 
 type AnswerDto struct {
-	QuestionID int       `json:"question_id"`
-	UserID     uuid.UUID `json:"user_id"`
-	Text       string    `json:"text"`
+	UserID uuid.UUID `json:"user_id"`
+	Text   string    `json:"text"`
 }

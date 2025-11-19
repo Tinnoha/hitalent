@@ -9,7 +9,7 @@ import (
 type QuestionRepositoriy interface {
 	GetAll() ([]entity.Question, error)
 	GetByID(int) (entity.Question, error)
-	Save(entity.Question) error
+	Save(entity.Question) (entity.Question, error)
 	Delete(int) error
 }
 
@@ -21,13 +21,13 @@ func NewQuestionUseCase(repo QuestionRepositoriy) *QuestionUseCase {
 	return &QuestionUseCase{repo: repo}
 }
 
-func (uc *QuestionUseCase) Save(dto entity.QuestionDto) error {
+func (uc *QuestionUseCase) Save(dto entity.QuestionDto) (entity.Question, error) {
 	if 5 > len(dto.Text) {
-		return errors.New("Text of question is short")
+		return entity.Question{}, errors.New("Text of question is short")
 	}
 
 	if len(dto.Text) > 200 {
-		return errors.New("Text of question is long")
+		return entity.Question{}, errors.New("Text of question is long")
 	}
 
 	question := entity.Question{
@@ -37,4 +37,16 @@ func (uc *QuestionUseCase) Save(dto entity.QuestionDto) error {
 	}
 
 	return uc.repo.Save(question)
+}
+
+func (uc *QuestionUseCase) GetAll() ([]entity.Question, error) {
+	return uc.repo.GetAll()
+}
+
+func (uc *QuestionUseCase) GetByID(ID int) (entity.Question, error) {
+	return uc.repo.GetByID(ID)
+}
+
+func (uc *QuestionUseCase) Delete(ID int) error {
+	return uc.repo.Delete(ID)
 }
