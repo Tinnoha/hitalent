@@ -129,4 +129,4 @@ go run cmd/main/main.go
 - Zap (логирование)
 - Goose (миграции)
 - Docker
-```
+
